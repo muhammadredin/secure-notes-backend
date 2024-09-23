@@ -1,7 +1,13 @@
 package io.github.muhammadredin.securenotesbackend.security;
 
 
+import io.github.muhammadredin.securenotesbackend.user.models.Role;
+import io.github.muhammadredin.securenotesbackend.user.models.User;
+import io.github.muhammadredin.securenotesbackend.user.models.UserRole;
+import io.github.muhammadredin.securenotesbackend.user.repositories.RoleRepository;
+import io.github.muhammadredin.securenotesbackend.user.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -15,12 +21,22 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.time.LocalDate;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
     private UserDetailsService userDetailsService;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -42,4 +58,46 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
         return provider;
     }
+
+    @Bean
+    public CommandLineRunner commandLineRunner(RoleRepository roleRepository,
+                                               UserRepository userRepository
+    ) {
+        return args -> {
+            Role userRole = roleRepository.findByRoleName(UserRole.ROLE_USER)
+                    .orElseGet(() -> roleRepository.save(new Role(UserRole.ROLE_USER)));
+
+            Role adminRole = roleRepository.findByRoleName(UserRole.ROLE_ADMIN)
+                    .orElseGet(() -> roleRepository.save(new Role(UserRole.ROLE_ADMIN)));
+
+            if(!userRepository.existsByUsername("user1") && !userRepository.existsByEmail("user1@gmail.com")) {
+                User user1 = new User("user1", "user1@gmail.com", encoder.encode("user1123"));
+                user1.setAccountNonLocked(false);
+                user1.setAccountNonExpired(true);
+                user1.setCredentialsNonExpired(true);
+                user1.setEnabled(true);
+                user1.setCredentialsExpiryDate(LocalDate.now().plusDays(1));
+                user1.setAccountExpiryDate(LocalDate.now().plusDays(1));
+                user1.setSignUpMethod("email");
+                user1.setRole(userRole);
+                userRepository.save(user1);
+            }
+
+            if(!userRepository.existsByUsername("user2") && !userRepository.existsByEmail("user2@gmail.com")) {
+                User user1 = new User("user2", "user2@gmail.com", encoder.encode("user1123"));
+                user1.setAccountNonLocked(true);
+                user1.setAccountNonExpired(true);
+                user1.setCredentialsNonExpired(true);
+                user1.setEnabled(true);
+                user1.setCredentialsExpiryDate(LocalDate.now().plusDays(1));
+                user1.setAccountExpiryDate(LocalDate.now().plusDays(1));
+                user1.setSignUpMethod("email");
+                user1.setRole(adminRole);
+                userRepository.save(user1);
+            }
+        };
+    }
+
 }
+
+
