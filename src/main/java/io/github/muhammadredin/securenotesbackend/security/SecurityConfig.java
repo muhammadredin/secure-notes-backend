@@ -1,6 +1,7 @@
 package io.github.muhammadredin.securenotesbackend.security;
 
 
+import io.github.muhammadredin.securenotesbackend.security.filter.JwtFilter;
 import io.github.muhammadredin.securenotesbackend.user.models.Role;
 import io.github.muhammadredin.securenotesbackend.user.models.User;
 import io.github.muhammadredin.securenotesbackend.user.models.UserRole;
@@ -23,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import java.time.LocalDate;
@@ -40,6 +42,9 @@ public class SecurityConfig {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtFilter jwtFilter;
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Bean
@@ -54,6 +59,7 @@ public class SecurityConfig {
         );
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.httpBasic(Customizer.withDefaults());
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
