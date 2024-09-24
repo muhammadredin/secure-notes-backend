@@ -1,9 +1,14 @@
 package io.github.muhammadredin.securenotesbackend.security.services;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +24,8 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
+
     private String secretKey;
 
     public JwtService() {
@@ -51,7 +58,21 @@ public class JwtService {
 
     public boolean validateToken(String token, UserDetails user) {
         String username = extractUsername(token);
-        return (!isTokenExpired(token) && user.getUsername().equals(username));
+        try {
+            System.out.println("Validate");
+            Jwts.parser().verifyWith(getKey())
+                    .build().parseSignedClaims(token);
+            return (!isTokenExpired(token) && user.getUsername().equals(username));
+        } catch (MalformedJwtException e) {
+            logger.error("Invalid JWT token: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            logger.error("JWT token is expired: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            logger.error("JWT token is unsupported: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            logger.error("JWT claims string is empty: {}", e.getMessage());
+        }
+        return false;
     }
 
     public boolean isTokenExpired(String token) {

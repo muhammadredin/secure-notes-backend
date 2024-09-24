@@ -1,9 +1,13 @@
 package io.github.muhammadredin.securenotesbackend.user.service;
 
+import io.github.muhammadredin.securenotesbackend.common.response.MessageResponse;
 import io.github.muhammadredin.securenotesbackend.security.services.JwtService;
+import io.github.muhammadredin.securenotesbackend.user.dto.LoginRequestDto;
+import io.github.muhammadredin.securenotesbackend.user.dto.LoginResponseDto;
 import io.github.muhammadredin.securenotesbackend.user.models.*;
 import io.github.muhammadredin.securenotesbackend.user.repositories.RoleRepository;
 import io.github.muhammadredin.securenotesbackend.user.repositories.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -34,15 +38,26 @@ public class UserService {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public User createUser(User user) {
+    public MessageResponse createUser(HttpServletRequest request, User user) {
+        List<String> errors = new ArrayList<>();
+
         User checkUser = userRepository.findByUsername(user.getUsername());
         if (checkUser != null) {
-            throw new RuntimeException("Username already exists");
+            errors.add("Username is already taken");
         }
 
-        checkUser = userRepository.findByUsername(user.getEmail());
+        checkUser = userRepository.findByEmail(user.getEmail());
         if (checkUser != null) {
-            throw new RuntimeException("Email already exists");
+            errors.add("Email is already taken");
+        }
+
+        if (!errors.isEmpty()) {
+            return new MessageResponse(
+                    request.getServletPath(),
+                    "Bad Request",
+                    errors,
+                    400
+            );
         }
 
         Role userRole = roleRepository.findByRoleName(UserRole.ROLE_USER)
@@ -58,7 +73,14 @@ public class UserService {
         user.setSignUpMethod("email");
         user.setRole(userRole);
 
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        return new MessageResponse(
+                request.getServletPath(),
+                "User Successfully Created",
+                errors,
+                201
+        );
     }
 
     public LoginResponseDto login(LoginRequestDto dto) {
@@ -74,6 +96,7 @@ public class UserService {
                     .toList();
             return new LoginResponseDto(token, user.getUsername(), roles);
         }
+
         throw new BadCredentialsException("Bad credentials");
     }
 }

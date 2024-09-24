@@ -2,6 +2,7 @@ package io.github.muhammadredin.securenotesbackend.security;
 
 
 import io.github.muhammadredin.securenotesbackend.security.filter.JwtFilter;
+import io.github.muhammadredin.securenotesbackend.security.services.AuthEntryPointImpl;
 import io.github.muhammadredin.securenotesbackend.user.models.Role;
 import io.github.muhammadredin.securenotesbackend.user.models.User;
 import io.github.muhammadredin.securenotesbackend.user.models.UserRole;
@@ -15,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,6 +49,9 @@ public class SecurityConfig {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
+    @Autowired
+    public AuthEntryPointImpl authEntryPoint;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -60,6 +65,8 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.httpBasic(Customizer.withDefaults());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        http.exceptionHandling(exception ->
+                exception.authenticationEntryPoint(authEntryPoint));
         return http.build();
     }
 

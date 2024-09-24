@@ -1,4 +1,4 @@
-package io.github.muhammadredin.securenotesbackend.user.models;
+package io.github.muhammadredin.securenotesbackend.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
