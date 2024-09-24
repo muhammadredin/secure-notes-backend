@@ -44,6 +44,7 @@ public class SecurityConfig {
         http.authorizeRequests(
                 request -> request
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
         );
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -71,26 +72,26 @@ public class SecurityConfig {
                     .orElseGet(() -> roleRepository.save(new Role(UserRole.ROLE_ADMIN)));
 
             if(!userRepository.existsByUsername("user1") && !userRepository.existsByEmail("user1@gmail.com")) {
-                User user1 = new User("user1", "user1@gmail.com", encoder.encode("user1123"));
+                User user1 = new User("user1", "user1@gmail.com", encoder.encode("user1234"));
                 user1.setAccountNonLocked(false);
                 user1.setAccountNonExpired(true);
                 user1.setCredentialsNonExpired(true);
                 user1.setEnabled(true);
-                user1.setCredentialsExpiryDate(LocalDate.now().plusDays(1));
-                user1.setAccountExpiryDate(LocalDate.now().plusDays(1));
+                user1.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+                user1.setAccountExpiryDate(LocalDate.now().plusYears(1));
                 user1.setSignUpMethod("email");
                 user1.setRole(userRole);
                 userRepository.save(user1);
             }
 
-            if(!userRepository.existsByUsername("user2") && !userRepository.existsByEmail("user2@gmail.com")) {
-                User user1 = new User("user2", "user2@gmail.com", encoder.encode("user1123"));
+            if(!userRepository.existsByUsername("admin1") && !userRepository.existsByEmail("admin1@gmail.com")) {
+                User user1 = new User("admin1", "admin1@gmail.com", encoder.encode("admin1234"));
                 user1.setAccountNonLocked(true);
                 user1.setAccountNonExpired(true);
                 user1.setCredentialsNonExpired(true);
                 user1.setEnabled(true);
-                user1.setCredentialsExpiryDate(LocalDate.now().plusDays(1));
-                user1.setAccountExpiryDate(LocalDate.now().plusDays(1));
+                user1.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+                user1.setAccountExpiryDate(LocalDate.now().plusYears(1));
                 user1.setSignUpMethod("email");
                 user1.setRole(adminRole);
                 userRepository.save(user1);
